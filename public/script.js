@@ -6,16 +6,22 @@ new Vue({
         total: 0,
         items: [],
         cart: [],
-        newSearch: '',
-        lastSearch: ''
+        newSearch: 'anime',
+        lastSearch: '',
+        loading: false,
+        price: PRICE
     },
     methods: {
 
         onSubmit() {
+            this.items = [];
+            this.loading = true;
+
             this.$http.get(`/search/${this.newSearch}`)
                 .then(res => {
                     this.lastSearch = this.newSearch;
                     this.items = res.data;
+                    this.loading = false
                 })
         },
 
@@ -53,5 +59,9 @@ new Vue({
         currency(price) {
             return `$ ${price.toFixed(2)}`;
         }
+    },
+
+    mounted() {
+        this.onSubmit();
     }
 });
