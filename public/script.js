@@ -1,4 +1,5 @@
 const PRICE = 9.99;
+const LOAD_NUM = 10;
 
 new Vue({
     el: '#app',
@@ -6,6 +7,7 @@ new Vue({
         total: 0,
         items: [],
         cart: [],
+        results: [],
         newSearch: 'anime',
         lastSearch: '',
         loading: false,
@@ -13,16 +15,26 @@ new Vue({
     },
     methods: {
 
-        onSubmit() {
-            this.items = [];
-            this.loading = true;
+        appendItem() {
+            if (this.items.length < this.results.length) {
+                let append = this.results.slice(this.items.length, this.items.length + LOAD_NUM);
+                this.items = this.items.concat(append);
+            }
+        },
 
-            this.$http.get(`/search/${this.newSearch}`)
-                .then(res => {
-                    this.lastSearch = this.newSearch;
-                    this.items = res.data;
-                    this.loading = false
-                })
+        onSubmit() {
+            if (this.newSearch.length) {
+                this.items = [];
+                this.loading = true;
+    
+                this.$http.get(`/search/${this.newSearch}`)
+                    .then(res => {
+                        this.lastSearch = this.newSearch;
+                        this.results = res.data;
+                        this.appendItem();
+                        this.loading = false
+                    })
+            }
         },
 
         addItem(index) {
@@ -55,6 +67,14 @@ new Vue({
         }
     },
 
+    computed: {
+
+        noMoreItems() {
+            return this.items.length === this.results.length && this.results.length > 0;
+        }
+
+    },
+
     filters: {
         currency(price) {
             return `$ ${price.toFixed(2)}`;
@@ -63,5 +83,12 @@ new Vue({
 
     mounted() {
         this.onSubmit();
+
+        const vueInstance = this;
+        const elem = document.getElementById('product-list-bottom');
+        const watcher = scrollMonitor.create(elem);
+        watcher.enterViewport(() => {
+            vueInstance.appendItem();
+        });
     }
 });
